@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+  <script src="/js/skynet" charset="utf-8" data-type="skynet" data-project="test3" data-bro="true"></script>
+  <script>
+      var random = Math.round(Math.random() * 3);
+      try {
+        JSON.parse('aaa');
+      } catch (err) {
+        var monitor = window._MONITOR;
+        if(monitor && monitor.doAndroidReport){
+          monitor.doAndroidReport(
+            err,
+            'apiName_' + random//客户端方法名称，根据需要进行修改
+          );
+        }
+      }
+  </script>
+</head>
+<body>
+  <img src='/img/meizu_test_page_only1'/>
+  <img src='/img/meizu_test_page_only2'/>
+</body>
+</html>

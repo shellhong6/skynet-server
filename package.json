@@ -1,0 +1,27 @@
+{
+  "name": "monitor-hapi",
+  "version": "1.0.0",
+  "description": "monitoring back-end by hapi.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "cd src && forever start -e ../logs/forever-log server.js",
+    "stop": "cd src && forever stop server.js"
+  },
+  "author": "hongguangjie",
+  "license": "ISC",
+  "dependencies": {
+    "@flyme/skynet-db": "^1.5.0",
+    "@flyme/skynet-utils": "^1.0.4",
+    "async": "^2.0.1",
+    "good": "^7.0.1",
+    "good-console": "^6.1.2",
+    "good-squeeze": "^4.0.0",
+    "hapi": "^14.2.0",
+    "inert": "^4.0.2",
+    "mongodb": "^2.2.6",
+    "mongoose": "^4.5.9",
+    "node-schedule": "^1.2.0",
+    "rotating-file-stream": "^1.0.5"
+  }
+}

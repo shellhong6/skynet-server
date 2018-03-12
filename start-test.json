@@ -1,0 +1,10 @@
+{
+  "script":"/data/node/node-server/monitor-server/start.js",
+  "error_file":"/data/logs/node/monitor-server-err.log",
+  "out_file":"/data/logs/node/monitor-server-out.log",
+  "merge_logs":false,
+  "log_date_format":"YYYY-MM-DD HH:mm:ss",
+  "name": "monitor-server-test",
+  "instances": "max",
+  "exec_mode" : "cluster"
+}
