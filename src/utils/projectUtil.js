@@ -2,13 +2,12 @@ var Schedule = require('node-schedule');
 const Service = require('@flyme/skynet-db');
 const LogUtil = require('@flyme/skynet-utils/lib/logUtil.js');
 
-Service.setOptions('occasional');
-
 var app = {
   projects: []
 };
 
 function _dealProjects(){
+  
   Service.find('manage-projects', '', {}, (r) => {
     LogUtil.log('begin projectUtils length:', r.length, ' ', new Date().toString());
     app.projects = [];

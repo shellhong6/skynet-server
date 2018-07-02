@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title></title>
+  <style media="screen">
+    html,
+    body {
+      height: 100%;
+    }
+  </style>
+  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+  <script src="./js/vue"></script>
+  <script src="./js/elementui"></script>
+</head>
+
+<body>
+  <div id='table'>
+    <el-table
+      :data="tableData"
+      style="width: 100%">
+      <el-table-column
+        prop="project"
+        label="project"
+        width="180">
+      </el-table-column>
+      <el-table-column
+        prop="type"
+        label="type"
+        width="180">
+      </el-table-column>
+      <el-table-column
+        prop="_reportServerTime"
+        label="上报时间"
+        width="180"
+        :formatter='formatterHandle'>
+      </el-table-column>
+      <el-table-column
+        prop="detail"
+        label="detail">
+      </el-table-column>
+    </el-table>
+  </div>
+  <div id="pagination">
+    <el-pagination
+      :page-size="size"
+      :pager-count="count"
+      layout="prev, pager, next"
+      @current-change='change'
+      :total="total">
+    </el-pagination>
+  </div>
+  <script type="text/javascript">
+
+  var request = {
+    alert: window.alert.bind(window),//可重载该方法来实现错误提示方式修改
+    post: function(opt) {
+      opt.type = 'post';
+      return this.ajax(opt);
+    },
+    get: function(opt) {
+      opt.type = 'get';
+      return this.ajax(opt);
+    },
+    serilize: function(json) {
+      let result = '';
+      for (let p in json) {
+        if (json.hasOwnProperty(p)) {
+          result += `${p}=${json[p]}&`;
+        }
+      }
+      return result.substr(0, result.length - 1);
+    },
+    ajax: function(opt) {
+      let req = new XMLHttpRequest(),
+          success = opt.success || function() {},
+          complete = opt.complete || function() {},
+          error = opt.error || function() {
+            alert(arguments[0].mes);
+          },
+          timeout = opt.timeout || 5e4,
+          returnAll = opt.returnAll,
+          cache = opt.cache,
+          dataType = opt.dataType || 'json',
+          data = opt.data || {},
+          url = opt.url,
+          params = this.serilize(data),
+          timeoutHandle = null;
+      opt.type === undefined && (opt.type = 'post');
+      req.onreadystatechange = () => {
+        if (req.readyState != 4) return;
+        clearTimeout(timeoutHandle);
+        if (req.status != 200 && req.status != 304) {
+          error && error({
+            req: req,
+            mes: '服务不可用'
+          });
+          complete && complete(req);
+          return;
+        }
+        let rt = req.responseText;
+        switch (dataType) {
+          case 'json':
+            rt = JSON.parse(rt);
+            break;
+          default:
+            ;
+        }
+        let result = this.getData(rt, returnAll);
+        if(result != null){
+          success && success(result);
+        }
+        complete && complete(req);
+      };
+      if (opt.type == 'get') {
+        if (params) {
+          params = `?${params}${cache ? '' : '&_' + new Date().getTime()}`;
+        } else {
+          params = cache ? '' : '?_' + new Date().getTime();
+        }
+        req.open('GET', `${url}${params}`, true);
+      } else {
+        req.open('POST', `${url}${cache ? '' : '?_' + new Date().getTime()}`, true);
+        req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+      }
+      // req.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+      req.send(opt.type == 'post' ? params : null);
+      if (timeout) {
+        timeoutHandle = setTimeout(function() {
+          req.onreadystatechange = function() {};
+          req.abort();
+          error && error({
+            req: req,
+            mes: '请求超时'
+          });
+          complete && complete(req);
+        }, timeout);
+      }
+      return req;
+    },
+    getData: function(data, returnAll) {
+      if (!data) return null;
+      if (typeof(data) === 'object') {
+        if (data.code != 200) {
+          this.alert(data.message || '服务不可用', data);
+          return (returnAll && data || null);
+        } else {
+          return (returnAll && data || data.value);
+        }
+      }
+      return data;
+    }
+  };
+
+  var tableData = {
+    tableData: []
+  };
+  function _formatTime(date, format) {
+    var o = {
+      "M+": date.getMonth() + 1,
+      "d+": date.getDate(),
+      "h+": date.getHours(),
+      "m+": date.getMinutes(),
+      "s+": date.getSeconds()
+    };
+    for (var k in o) {
+      if (new RegExp("(" + k + ")").test(format)) {
+        format = format.replace(RegExp.$1, RegExp.$1.length == 1 ? o[k] : ("00" + o[k]).substr(("" + o[k]).length));
+      }
+    }
+    if (/(w+)/.test(format)) {
+      format = format.replace(RegExp.$1, this.getWeek(date));
+    }
+    if (/(y+)/.test(format)) {
+      format = format.replace(RegExp.$1, (date.getFullYear() + "").substr(4 - RegExp.$1.length));
+    }
+    return format;
+  }
+
+  var tableVue = new Vue({
+    el: '#table',
+    data() {
+      return tableData;
+    },
+    methods: {
+      formatterHandle(row, column, cellValue){
+        return _formatTime(new Date(cellValue), 'yyyy-MM-dd hh:mm:ss');
+      }
+    }
+  });
+  function _singleSplit(str, r) {
+    var temp = str.split('='), r = r || {};
+    r[temp[0]] = temp[1];
+    return r;
+  }
+  function _getSearchJson(){
+    var _search = location.search;
+    return _search.replace('?', '').split('&').reduce(function(a, b){
+      if(Object.prototype.toString.call(a).indexOf('String') != -1){
+        return _singleSplit(b, _singleSplit(a));
+      }
+      return _singleSplit(b, a);
+    });
+  }
+  var paginationVue = new Vue({
+    el: '#pagination',
+    data() {
+      return {
+        size: 10,
+        count: 11,
+        total: 0
+      }
+    },
+    methods: {
+      change: function(cur){
+        var p = _getSearchJson();
+        p.cur = cur;
+        p.pageSize = 10;
+        request.get({
+          url: '../meizu_get_warnning_message',
+          data: p,
+          success: function(res){
+            tableVue.tableData = res.data;
+            paginationVue.total = res.total;
+          }
+        });
+      }
+    }
+  });
+  paginationVue.change(1);
+  setTimeout(function(){
+    paginationVue.$notify({
+      showClose: true,
+      title: '警告',
+      message: '这份数据仅为您保留至后天凌晨5点',
+      type: 'warning',
+      duration: 20000
+    });
+  }, 2000);
+  </script>
+</body>
+
+</html>

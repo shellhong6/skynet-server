@@ -150,11 +150,17 @@
       save: function(paramsStr){
         this.request(prefix + '/save?q=' + encodeURIComponent(paramsStr));
       },
+      baseReport: function(action, paramsStr){
+        this.request(prefix + '/' + action + '?q=' + encodeURIComponent(paramsStr));
+      },
       report: function(paramsStr){
-        this.request(prefix + '/report?q=' + encodeURIComponent(paramsStr));
+        this.baseReport('report', paramsStr);
       },
       androidReport: function(paramsStr){
-        this.request(prefix + '/androidReport?q=' + encodeURIComponent(paramsStr));
+        this.baseReport('androidReport', paramsStr);
+      },
+      warnReport: function(paramsStr){
+        this.baseReport('warnReport', paramsStr);
       },
       saveByType: function(type, data){
         var methodyType = type.charAt(0).toUpperCase() + type.substr(1),
@@ -250,6 +256,13 @@
           apiName: apiName,
           message: data.message,
           stack: data.stack
+        }));
+      },
+      doWarnReport: function(type, detail){
+        methods.warnReport(JSON.stringify({
+          project: window._MONITOR.params.project,
+          type: type,
+          detail: detail
         }));
       },
       isLoad: function(){

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>meizu_test_vc_auth</title>
+    <style media="screen">
+      body{
+        -webkit-tap-highlight-color: rgba(0,0,0,0);
+      }
+      .input-group {
+        margin-bottom: 10px;
+      }
+      .input-group {
+        position: relative;
+        display: table;
+        border-collapse: separate;
+      }
+      .input-group .form-control {
+        position: relative;
+        z-index: 2;
+        float: left;
+        width: 100%;
+        margin-bottom: 0;
+      }
+      .form-control {
+        display: block;
+        width: 100%;
+        height: 34px;
+        padding: 6px 12px;
+        font-size: 14px;
+        line-height: 1.42857143;
+        color: #555;
+        background-color: #fff;
+        background-image: none;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+        box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+        -webkit-transition: border-color ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;
+        -o-transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+        transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+      }
+      button{
+        overflow: visible;
+        text-transform: none;
+        -webkit-appearance: button;
+        width: 50px;
+        height: 25px;
+        cursor: pointer;
+        border-radius: 5px;
+        outline: none;
+      }
+      button:hover{
+        background-color: #fafafa;
+      }
+      button:active{
+        background-color: #eae6e6;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="input-group">
+      <input id='add-password' type="password" class="form-control" placeholder="password" aria-describedby="basic-addon1">
+    </div>
+    <div class="input-group">
+      <input id='add-imei' type="text" class="form-control" placeholder="imei" aria-describedby="basic-addon1">
+    </div>
+    <button id='add-btn' type="button" class="btn btn-default">添加</button>
+    <br>
+    <br>
+    <hr>
+    <br>
+    <div class="input-group">
+      <input id='delete-password' type="password" class="form-control" placeholder="password" aria-describedby="basic-addon1">
+    </div>
+    <div class="input-group">
+      <input id='delete-imei' type="text" class="form-control" placeholder="imei" aria-describedby="basic-addon1">
+    </div>
+    <button id='delete-btn' type="button" class="btn btn-default">删除</button>
+    <script type="text/javascript">
+      var url1 = '//skynet.meizu.com/meizu_add_vc_auth';
+      var url2 = '//skynet.meizu.com/meizu_clear_vc_auth';
+      document.getElementById('add-btn').addEventListener('click', function(){
+        var password = document.getElementById('add-password').value;
+        var imei = document.getElementById('add-imei').value;
+        if(!password || !imei){
+          alert('不允许为空!');
+          return;
+        }
+        req.get({
+          url: url1,
+          data: {
+            password: password,
+            imei: imei
+          },
+          success: function(){
+            alert('success!');
+          }
+        });
+      });
+      document.getElementById('delete-btn').addEventListener('click', function(){
+        var password = document.getElementById('delete-password').value;
+        var imei = document.getElementById('delete-imei').value;
+        if(!password || !imei){
+          alert('不允许为空!');
+          return;
+        }
+        if(confirm('确定删除 imei:' + imei + ' 吗？')){
+          req.get({
+            url: url2,
+            data: {
+              password: password,
+              imei: imei
+            },
+            success: function(){
+              alert('success!');
+            }
+          });
+        }
+      });
+      var req = {
+        alert: window.alert.bind(window),//可重载该方法来实现错误提示方式修改
+        post: function(opt) {
+          opt.type = 'post';
+          return this.ajax(opt);
+        },
+        get: function(opt) {
+          opt.type = 'get';
+          return this.ajax(opt);
+        },
+        serilize: function(json) {
+          let result = '';
+          for (let p in json) {
+            if (json.hasOwnProperty(p)) {
+              result += `${p}=${json[p]}&`;
+            }
+          }
+          return result.substr(0, result.length - 1);
+        },
+        ajax: function(opt) {
+          let req = new XMLHttpRequest(),
+              success = opt.success || function() {},
+              complete = opt.complete || function() {},
+              error = opt.error || function() {
+                alert(arguments[0].mes);
+              },
+              timeout = opt.timeout || 5e4,
+              returnAll = opt.returnAll,
+              cache = opt.cache,
+              dataType = opt.dataType || 'json',
+              data = opt.data || {},
+              url = opt.url,
+              params = this.serilize(data),
+              timeoutHandle = null;
+          opt.type === undefined && (opt.type = 'post');
+          req.onreadystatechange = () => {
+            if (req.readyState != 4) return;
+            clearTimeout(timeoutHandle);
+            if (req.status != 200 && req.status != 304) {
+              error && error({
+                req: req,
+                mes: '服务不可用'
+              });
+              complete && complete(req);
+              return;
+            }
+            let rt = req.responseText;
+            switch (dataType) {
+              case 'json':
+                rt = JSON.parse(rt);
+                break;
+              default:
+                ;
+            }
+            let result = this.getData(rt, returnAll);
+            if(result != null){
+              success && success(result);
+            }
+            complete && complete(req);
+          };
+          if (opt.type == 'get') {
+            if (params) {
+              params = `?${params}${cache ? '' : '&_' + new Date().getTime()}`;
+            } else {
+              params = cache ? '' : '?_' + new Date().getTime();
+            }
+            req.open('GET', `${url}${params}`, true);
+          } else {
+            req.open('POST', `${url}${cache ? '' : '?_' + new Date().getTime()}`, true);
+            req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+          }
+          // req.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+          req.send(opt.type == 'post' ? params : null);
+          if (timeout) {
+            timeoutHandle = setTimeout(function() {
+              req.onreadystatechange = function() {};
+              req.abort();
+              error && error({
+                req: req,
+                mes: '请求超时'
+              });
+              complete && complete(req);
+            }, timeout);
+          }
+          return req;
+        },
+        getData: function(data, returnAll) {
+          if (!data) return null;
+          if (typeof(data) === 'object') {
+            if (data.code != 200) {
+              this.alert(data.message || '服务不可用', data);
+              return (returnAll && data || null);
+            } else {
+              return (returnAll && data || data.value);
+            }
+          }
+          return data;
+        }
+      };
+
+
+    </script>
+  </body>
+</html>
